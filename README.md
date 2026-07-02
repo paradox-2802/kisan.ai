@@ -1,72 +1,65 @@
-# AgroSathi
+# AgroSathi 🌾
+*The Intelligent Agriculture Assistant empowering farmers with AI-driven insights.*
 
-AgroSathi is an agriculture intelligence platform that combines a React chat interface, an Express API, a Retrieval-Augmented Generation (RAG) pipeline, image-based crop diagnosis, weather lookup, and agricultural notices. The repository is organized as three runnable services:
+AgroSathi is a comprehensive, AI-powered agricultural intelligence platform designed to support farmers by providing real-time, context-aware information. It combines a conversational interface with advanced capabilities like Retrieval-Augmented Generation (RAG) for localized agricultural documents, vision-based crop disease diagnosis, real-time weather integration, and curated agricultural news and government schemes.
 
-- `client/`: React + Vite single-page application.
-- `server/`: Express API, MongoDB models, RAG orchestration, disease diagnosis, PDF upload, and BullMQ worker.
-- `rss-service/`: Scheduled RSS ingestion service for agricultural news and government schemes.
-
-The implementation uses MongoDB for user and application data, Qdrant for vector retrieval, Valkey/Redis for PDF ingestion jobs, Hugging Face for text generation and embeddings, Google Gemini for image diagnosis, LibreTranslate for translation support, and Open-Meteo for browser-side weather data.
-
-## Implemented Features
+## 🌟 Key Features
 
 ### 🤖 **Intelligent Agricultural Assistant (RAG)**
--   **Document Grounding**: Ingests agricultural PDFs to provide answers strictly based on authoritative sources, reducing hallucinations.
--   **Semantic Search**: Uses **Qdrant** and **HuggingFace** embeddings to find the most relevant context for every query.
--   **Multi-Turn Conversations**: Remembers context from previous messages to handle follow-up questions naturally.
--   **Query Rewriting**: Automatically refines vague follow-up questions into standalone queries for better retrieval.
+- **Document Grounding**: Ingests and processes agricultural PDFs, manuals, and guidelines to ensure answers are strictly based on authoritative sources, minimizing AI hallucinations.
+- **Semantic Search**: Utilizes **Qdrant Vector Database** and **HuggingFace** embeddings (`all-MiniLM-L6-v2`) to retrieve the most relevant contextual information for every query.
+- **Context-Aware Multi-Turn Conversations**: Maintains conversation history for seamless follow-up questions, understanding the flow of interaction.
+- **Query Rewriting**: Employs an LLM (**Meta-Llama 3.1 8B Instruct**) to dynamically refine vague or incomplete follow-up questions into standalone queries for robust vector retrieval.
 
-### 🍃 **Pest & Disease Detection**
--   **Visual Diagnosis**: Farmers can upload photos of crops to instantly identify diseases.
--   **AI Analysis**: Powered by **Qwen 2.5 VL** (Vision-Language Model), it detects issues with high accuracy.
--   **Actionable Advice**: Provides detailed severity assessments, treatment recommendations, and prevention measures.
--   **Multilingual Output**: Disease reports are automatically translated into the user's preferred language.
+### 🍃 **Vision-Based Pest & Disease Detection**
+- **Instant Visual Diagnosis**: Farmers can upload photos of affected crops, leaves, or pests for immediate analysis.
+- **Advanced AI Analysis**: Powered by **Qwen 2.5 VL 7B Instruct** (Vision-Language Model) via HuggingFace Inference to detect and classify diseases with high accuracy.
+- **Actionable Remediation**: Provides comprehensive severity assessments, immediate treatment recommendations, and long-term prevention measures.
+- **Localized Output**: Diagnosis reports are automatically translated into the user's selected language.
 
-### 🌐 **Multilingual Support**
--   **Real-Time Translation**: Seamlessly translates queries and responses between English and Indian languages using **LibreTranslate**.
--   **Supported Languages**: Hindi, Bengali, Tamil, Telugu, Marathi, Kannada, Malayalam, Gujarati, Punjabi, and Urdu.
--   **Voice Input**: Supports speech-to-text for accessible interaction in native languages with visual waveform feedback.
+### 🌐 **Seamless Multilingual Experience**
+- **Real-Time Translation**: Breaks language barriers by translating both user queries and system responses on-the-fly using self-hosted **LibreTranslate**.
+- **Supported Languages**: English, Hindi, Bengali, Tamil, Telugu, Marathi, Kannada, Malayalam, Gujarati, Punjabi, and Urdu.
+- **Voice-to-Text Input**: Integrates speech recognition for accessible interaction, especially useful for farmers comfortable with native spoken languages, featuring visual waveform feedback.
 
-### 🌤️ **Real-Time Weather Integration**
--   **Location-Based Forecast**: Displays current temperature, humidity, wind speed, and rain probability using **Open-Meteo API**.
--   **7-Day Forecast**: Provides detailed daily weather predictions to help farmers plan agricultural activities.
--   **Premium UI**: Features glassmorphism design with smooth animations and dark mode support.
+### 🌤️ **Real-Time & Predictive Weather**
+- **Hyper-Local Forecast**: Fetches current temperature, humidity, wind speed, and precipitation probability using the **Open-Meteo API**.
+- **7-Day Forecasting**: Delivers detailed daily weather predictions, aiding in activity planning (e.g., sowing, harvesting, pesticide application).
+- **Premium UI**: Designed with glassmorphism aesthetics, smooth animations (Framer Motion), and responsive dark mode support.
 
-### 📰 **Agricultural News & Schemes**
--   **RSS Feed Aggregation**: Automatically fetches and summarizes government schemes and agricultural news.
--   **AI-Powered Summaries**: Uses LLM to generate concise, farmer-friendly summaries of complex notices.
--   **Scheduled Updates**: Uses `node-cron` scheduler to run every 12 hours with graceful shutdown support.
+### 📰 **Agricultural News & Schemes Aggregation**
+- **Automated RSS Ingestion**: A dedicated microservice fetches updates from various agricultural and governmental RSS feeds.
+- **AI-Powered Summarization**: Processes complex, lengthy official notices into concise, farmer-friendly summaries using LLMs.
+- **Scheduled Synchronization**: Driven by `node-cron`, the service runs reliably every 12 hours to keep the database updated.
 
 ### 🔐 **Secure & Robust Architecture**
--   **Authentication**: Secure JWT-based login for Users and Admins.
--   **Chat Management**:
-    -   Persistent chat history stored in **MongoDB**.
-    -   Separate history tracking for General Chat and Disease Detection.
-    -   Ability to rename and delete conversations.
--   **Admin Dashboard**: Secure capabilities for authorized personnel to upload and manage reference documents (PDFs).
+- **Role-Based Authentication**: Secure JWT-based login for standard Users (Farmers) and Admins.
+- **Persistent Chat Management**: Stores conversation histories in **MongoDB**, separating General Chat from Disease Detection logs. Features options to rename and delete individual sessions.
+- **Admin Document Dashboard**: Secure portal for authorized personnel to upload, manage, and process reference documents (PDFs) into the RAG vector store.
+- **Asynchronous Processing**: Employs **BullMQ** and **Redis/Valkey** to handle heavy background tasks like PDF parsing and embedding generation without blocking the main API.
 
 ---
 
 ## 🧩 Architecture & Workflows
 
-### System Architecture
+### High-Level System Architecture
 
 ```mermaid
 graph TD
     Client["Client (React + Vite)"] <-->|REST API| Server["Server (Node + Express)"]
     
     subgraph Data Layer
-        Server <-->|Store History| Mongo[("MongoDB")]
+        Server <-->|Store History/Users| Mongo[("MongoDB")]
         Server <-->|Vector Search| Qdrant[("Qdrant Vector DB")]
-        Server <-->|Job Queue| Redis[("Redis")]
-        RSS["RSS Service"] -->|Store Notices| Mongo
+        Server <-->|Job Queue| Redis[("Redis / Valkey")]
+        RSS["RSS Service"] -->|Store Summarized Notices| Mongo
     end
     
-    subgraph AI Services
-        Server <-->|LLM & Vision| HF["HuggingFace Inference"]
-        Server <-->|Embeddings| HF_Embed["HuggingFace Embeddings"]
+    subgraph AI & ML Services
+        Server <-->|Chat & Vision Inference| HF["HuggingFace Inference API"]
+        Server <-->|Embeddings| HF_Embed["HuggingFace (all-MiniLM-L6-v2)"]
         Server <-->|Translation| Libre["LibreTranslate"]
-        RSS -->|Summarize| HF
+        RSS -->|Summarize News| HF
     end
     
     subgraph External APIs
@@ -74,265 +67,286 @@ graph TD
     end
 ```
 
-## RAG Workflow
+### RAG (Retrieval-Augmented Generation) Workflow
 
-### PDF Ingestion
-
+**1. Knowledge Ingestion (Admin)**
 ```mermaid
 graph TD
   A["Admin uploads PDF"] --> B["POST /upload/pdf"]
-  B --> C["Admin JWT validation"]
-  C --> D["Multer PDF validation"]
-  D --> E["Temporary file in server/uploads"]
-  E --> F["BullMQ file-upload-queue"]
-  F --> G["PDF worker"]
-  G --> H["PDFLoader page extraction"]
-  H --> I["RecursiveCharacterTextSplitter"]
-  I --> J["Hugging Face embeddings"]
-  J --> K["Qdrant collection: langchainjs-testing"]
-  K --> L["Delete temporary PDF"]
+  B --> C["JWT Authorization"]
+  C --> D["Temporary storage via Multer"]
+  D --> E["Push to BullMQ (file-upload-queue)"]
+  E --> F["Worker picks up job"]
+  F --> G["Parse PDF (pdf-parse)"]
+  G --> H["RecursiveCharacterTextSplitter"]
+  H --> I["Generate Embeddings (HuggingFace)"]
+  I --> J["Upsert to Qdrant (langchainjs-testing)"]
+  J --> K["Cleanup temporary files"]
 ```
 
-### Chat Response Generation
-
+**2. Query Processing (User)**
 ```mermaid
 sequenceDiagram
-    participant Farmer
-    participant Server
-    participant Vision as Vision Model (Qwen 2.5 VL)
+    participant User
+    participant API as Server API
+    participant Translate as LibreTranslate
+    participant Qdrant as Qdrant DB
+    participant LLM as HuggingFace LLM
     
-    Farmer->>Server: Upload Crop Image
-    Server->>Vision: Analyze Image + Prompt
-    Vision-->>Server: Disease Diagnosis
-    Server-->>Farmer: Diagnosis & Treatment (Translated)
+    User->>API: Asks a question (Native Language)
+    API->>Translate: Translate to English
+    Translate-->>API: English Query
+    API->>Qdrant: Semantic Vector Search
+    Qdrant-->>API: Top Context Documents
+    API->>LLM: Prompt with Context & Query
+    LLM-->>API: Generated Answer (English)
+    API->>Translate: Translate Answer to Native Language
+    Translate-->>API: Translated Answer
+    API-->>User: Final Response
 ```
 
 ---
 
+## 📂 Comprehensive Project Structure
+
+```
+AgroSathi/
+├── client/                     # Frontend React SPA
+│   ├── src/
+│   │   ├── components/         # Reusable UI elements
+│   │   │   ├── chat/           # Chat interface components
+│   │   │   │   ├── Sidebar.jsx
+│   │   │   │   ├── WeatherWidget.jsx
+│   │   │   │   └── NoticesWidget.jsx
+│   │   │   └── ProtectedAdminRoute.jsx
+│   │   ├── pages/              # Main application views
+│   │   │   ├── Chatbot.jsx     # Core conversational UI
+│   │   │   ├── DiseaseDetection.js
+│   │   │   ├── Login.jsx & Signup.jsx
+│   │   │   ├── AdminLogin.jsx & AdminUpload.jsx
+│   │   │   └── Notices.jsx
+│   │   └── utils/              # API wrappers, Auth helpers
+│   ├── package.json
+│   ├── vite.config.js
+│   └── tailwind.config.js      # Theming and styling configuration
+│
+├── server/                     # Backend API & Workers
+│   ├── config/                 # DB, AI, and Queue setups
+│   ├── controllers/            # Route logic
+│   │   ├── authController.js, chatController.js
+│   │   ├── diseaseController.js, noticeController.js
+│   │   └── uploadController.js
+│   ├── middleware/             # JWT Auth, Multer
+│   ├── models/                 # Mongoose Schemas (User, Chat, Notice, DiseaseDetection)
+│   ├── routes/                 # API endpoints definition
+│   ├── services/               # Core business logic
+│   │   ├── aiService.js        # HuggingFace & LangChain integrations
+│   │   ├── translationService.js # LibreTranslate wrappers
+│   │   └── visionService.js    # Vision model interactions
+│   ├── worker.js               # BullMQ worker for async PDF processing
+│   ├── index.js                # Main Express server entry point
+│   └── package.json
+│
+├── rss-service/                # Standalone Cron Service
+│   ├── jobs/
+│   │   └── rssExecutor.js      # RSS fetching and summarization logic
+│   ├── index.js                # Cron initialization
+│   └── package.json
+│
+└── docker-compose.yml          # Container orchestration
+```
+
 ---
 
-## 📂 Project Structure
+## 🏗️ Technology Stack
 
-### Backend (`server/`)
--   **`config/`**: Database, AI, and Queue configuration.
--   **`controllers/`**: Request handling logic (`chatController`, `diseaseController`, `noticeController`, etc.).
--   **`routes/`**: API route definitions mapping to controllers.
--   **`services/`**: Business logic helpers (`aiService`, `visionService`, `translationService`).
--   **`utils/`**: Shared utilities (`response` helpers, `multer` config).
--   **`middleware/`**: Authentication and authorization middleware.
+### **Frontend Layer**
+- **Framework**: [React 19](https://react.dev/) with [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Markdown Rendering**: `react-markdown`
 
-### Frontend (`client/`)
--   **`src/components/`**: Reusable UI components (`Sidebar`, `WeatherWidget`, `NoticesWidget`).
--   **`src/pages/`**: Main application views (`Chatbot.jsx`, `Login.jsx`, `AdminUpload.jsx`).
--   **`src/utils/`**: Client-side utilities (API helpers, auth, text-to-speech).
+### **Backend Layer**
+- **Runtime**: [Node.js](https://nodejs.org/) (ES Modules)
+- **Framework**: [Express.js](https://expressjs.com/)
+- **Database**: [MongoDB](https://www.mongodb.com/) via Mongoose
+- **Vector Search**: [Qdrant](https://qdrant.tech/)
+- **Message Broker/Cache**: [Valkey](https://valkey.io/) / [Redis](https://redis.io/)
+- **Background Jobs**: [BullMQ](https://docs.bullmq.io/)
+- **AI Orchestration**: [LangChain.js](https://js.langchain.com/)
 
-### RSS Service (`rss-service/`)
--   **`jobs/`**: Scheduled RSS feed processing logic.
--   **`services/`**: RSS parsing and AI summarization services.
--   **`config/`**: Database connection for storing notices.
-
----
-
-## 🏗️ Tech Stack
-
-### **Frontend**
--   **Framework**: [React](https://react.dev/) (Vite)
--   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
--   **Animations**: [Framer Motion](https://www.framer.com/motion/)
--   **Icons**: [Lucide React](https://lucide.dev/)
--   **State & Routing**: React Router DOM
-
-### **Backend**
--   **Runtime**: [Node.js](https://nodejs.org/)
--   **Framework**: [Express.js](https://expressjs.com/)
--   **Database**: [MongoDB](https://www.mongodb.com/) (Mongoose)
--   **Vector Database**: [Qdrant](https://qdrant.tech/)
--   **Queue System**: [BullMQ](https://docs.bullmq.io/) with [Redis](https://redis.io/)
--   **AI Framework**: [LangChain](https://js.langchain.com/)
--   **RSS Parsing**: [rss-parser](https://www.npmjs.com/package/rss-parser)
-
-### **AI & Models**
--   **Chat LLM**: **Qwen 2.5 72B Instruct** (via [HuggingFace Inference](https://huggingface.co/))
--   **Vision Model**: **Qwen 2.5 VL 7B Instruct** (via HuggingFace Inference)
--   **Query Rewriter**: **Meta-Llama 3.1 8B Instruct** (via HuggingFace Inference)
--   **Embeddings**: `sentence-transformers/all-MiniLM-L6-v2`
--   **Translation**: [LibreTranslate](https://libretranslate.com/)
+### **AI & Machine Learning Models**
+- **Conversational LLM**: `Qwen/Qwen2.5-72B-Instruct` (via HuggingFace Inference API)
+- **Vision/Disease Model**: `Qwen/Qwen2.5-VL-7B-Instruct` (via HuggingFace Inference API)
+- **Query Refiner**: `meta-llama/Llama-3.1-8B-Instruct`
+- **Embeddings**: `sentence-transformers/all-MiniLM-L6-v2`
+- **Translation**: [LibreTranslate](https://libretranslate.com/) (Self-hosted via Docker)
 
 ---
 
-## 🐳 Running the Project with Docker
+## 🚀 Installation and Setup
 
 ### Prerequisites
--   [Docker & Docker Compose](https://www.docker.com/)
+- [Docker Engine & Docker Compose](https://www.docker.com/) (Recommended)
+- [Node.js](https://nodejs.org/) (v18 or higher, if running locally)
+- [pnpm](https://pnpm.io/) and npm
+- A MongoDB cluster (e.g., MongoDB Atlas or local instance)
 
-### Quick Start
+### Environment Variables (.env)
 
-1. **Clone the repository**:
-```bash
-git clone <repository-url>
-cd agricultural-chat-bot
-```
+You need to create three `.env` files in the respective directories before starting the application.
 
-2. **Configure environment variables**:
-Create a `.env` file in the `server` directory:
+**1. `server/.env`**
 ```env
 PORT=8000
 MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_user_jwt_secret
+JWT_SECRET=your_secure_user_jwt_secret
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_admin_password
-ADMIN_JWT_SECRET=your_admin_jwt_secret
-HUGGINGFACE_API_KEY=your_huggingface_api_key
-GEMINI_API_KEY=your_gemini_api_key
+ADMIN_JWT_SECRET=your_secure_admin_jwt_secret
+HUGGINGFACE_API_KEY=your_huggingface_access_token
 QDRANT_URL=http://qdrant:6333
 REDIS_HOST=valkey
 REDIS_PORT=6379
-
-# AI Services
-HUGGINGFACE_API_KEY=your_hf_key_here
 LIBRETRANSLATE_URL=http://libretranslate:5000
 ```
 
-Create `client/.env`:
-
+**2. `client/.env`**
 ```env
 VITE_API_BASE=http://localhost:8000
 ```
 
-Create `rss-service/.env`:
-
+**3. `rss-service/.env`**
 ```env
 MONGODB_URI=your_mongodb_connection_string
+HUGGINGFACE_API_KEY=your_huggingface_access_token
 ```
 
-## Running with Docker Compose
+### 🔑 Acquiring the HuggingFace API Key
+1. Register/Login at [HuggingFace](https://huggingface.co/).
+2. Navigate to **Settings > Access Tokens**.
+3. Create a new token with **Read** permissions.
+4. Copy the token into your `.env` files.
 
-Prerequisites:
+---
 
-- Docker
-- Docker Compose
-- A reachable MongoDB instance configured through `MONGODB_URI`
+## 🐳 Running with Docker (Recommended)
 
-Start all services:
+The easiest way to run the entire stack (Frontend, API Backend, Worker, RSS Service, Qdrant, Valkey, and LibreTranslate).
 
+1. Clone the repository and configure `.env` files as shown above.
+2. Build and start the containers:
+   ```bash
+   docker-compose up --build
+   ```
+3. Access the services:
+   - **Frontend App**: `http://localhost:5173`
+   - **Backend API**: `http://localhost:8000`
+   - **Qdrant Dashboard**: `http://localhost:6333/dashboard`
+   - **LibreTranslate UI**: `http://localhost:5000`
+
+---
+
+## 💻 Running Locally (Manual Setup)
+
+If you prefer to run services manually for development:
+
+**1. Infrastructure Services**
+Start Qdrant and Valkey/Redis (you can use docker just for these):
 ```bash
-docker-compose up --build
+docker run -p 6333:6333 qdrant/qdrant
+docker run -p 6379:6379 valkey/valkey
 ```
 
-Default service URLs:
-
-| Service | URL |
-| --- | --- |
-| Client | `http://localhost:5173` |
-| Backend API | `http://localhost:8000` |
-| Qdrant | `http://localhost:6333` |
-| Valkey/Redis | `localhost:6379` |
-| LibreTranslate | `http://localhost:5000` |
-
-Important: `docker-compose.yml` does not define a MongoDB container. Use a local, remote, or managed MongoDB deployment and set `MONGODB_URI` accordingly.
-
-## Local Development
-
-Install and run each service separately if you do not want to use Docker.
-
-Backend:
-
+**2. Backend API**
 ```bash
 cd server
 pnpm install
 pnpm dev
 ```
 
-PDF worker:
-
+**3. Backend Background Worker** (In a new terminal)
 ```bash
-docker-compose down
+cd server
+pnpm dev:worker
 ```
 
----
-
-## 📚 API Endpoints
-
-### Authentication
-- `POST /auth/signup` - User registration
-- `POST /auth/login` - User login
-- `POST /admin/login` - Admin login
-
-### Chat
-- `POST /chat/create` - Create new chat session
-- `GET /chat/list` - Get all chat sessions
-- `GET /chat/history/:chatId` - Get chat history
-- `POST /chat` - Send message (RAG-based response)
-- `DELETE /chat/:chatId` - Delete chat session
-
-### Disease Detection
-- `POST /chat/disease/create` - Create disease detection session
-- `POST /chat/disease-detect` - Upload image for diagnosis
-- `GET /chat/disease/history/:chatId` - Get diagnosis history
-
-### Admin
-- `POST /upload/pdf` - Upload agricultural reference documents
-
-### Notices
-- `GET /api/notices` - Get paginated agricultural news and schemes
-  - Query params: `page`, `limit`, `type` (GOVERNMENT | AGRI_NEWS)
-
----
-
-## � Production Deployment
-
-### Environment Configuration
-Ensure all environment variables are properly set:
-- `HUGGINGFACE_API_KEY` - Required for AI models
-- `JWT_SECRET` & `ADMIN_JWT_SECRET` - Use strong, unique secrets
-- `MONGODB_URI` - Production MongoDB connection string
-- `QDRANT_URL` - Qdrant vector database URL
-- `REDIS_HOST` & `REDIS_PORT` - Redis/Valkey configuration
-
-### Build Steps
+**4. Frontend Client** (In a new terminal)
 ```bash
 cd client
 npm install
 npm run dev
 ```
 
-RSS service:
-
+**5. RSS Aggregation Service** (In a new terminal)
 ```bash
-docker-compose -f docker-compose.yml up -d --build
+cd rss-service
+npm install
+npm run dev
 ```
-
-### Health Checks
-- Backend: `GET http://localhost:8000/` should return `{"status":"OK"}`
-- Qdrant: `http://localhost:6333/dashboard`
-- Redis: Use `redis-cli ping`
 
 ---
 
-## �🔑 Getting HuggingFace API Key
+## 📚 API Endpoints Documentation
 
-1. Create a free account at [HuggingFace](https://huggingface.co/)
-2. Go to [Settings > Access Tokens](https://huggingface.co/settings/tokens)
-3. Create a new token with "Read" permissions
-4. Copy the token and add it to your `.env` file
+### **Authentication (`/auth` & `/admin`)**
+- `POST /auth/signup` - Register a new user (Farmer).
+- `POST /auth/login` - Authenticate a user and receive a JWT.
+- `POST /admin/login` - Authenticate an admin and receive an Admin JWT.
+
+### **Chat & RAG (`/chat`)**
+- `POST /chat/create` - Initialize a new conversation thread.
+- `GET /chat/list` - Retrieve all conversation threads for the authenticated user.
+- `GET /chat/history/:chatId` - Retrieve messages for a specific chat.
+- `POST /chat` - Send a message to the RAG system and get an AI response.
+- `DELETE /chat/:chatId` - Delete a conversation thread.
+- `PUT /chat/:chatId/rename` - Rename a chat thread title.
+
+### **Disease Detection (`/chat/disease*`)**
+- `POST /chat/disease/create` - Initialize a new disease detection log.
+- `POST /chat/disease-detect` - Upload an image (Multipart form data) for visual diagnosis.
+- `GET /chat/disease/history/:chatId` - Retrieve historical diagnosis results.
+
+### **Admin Actions (`/upload`)**
+- `POST /upload/pdf` - Upload PDF documents to be processed by the BullMQ worker and ingested into Qdrant. Requires Admin JWT.
+
+### **Notices (`/api/notices`)**
+- `GET /api/notices` - Fetch paginated notices/schemes.
+  - Query Params: `page`, `limit`, `type` (`GOVERNMENT` | `AGRI_NEWS`)
+
+---
+
+## 🗄️ Database Models Overview
+
+- **User**: Stores credentials and preferences.
+- **Chat**: Stores conversation history threads (both general Q&A and disease detection logs).
+- **Notice**: Stores summarized RSS feed items categorized by type and date.
+- **DiseaseDetection** (Embedded or relation): Stores image metadata, diagnosis results, and AI recommendations.
+
+---
+
+## 🔮 Future Enhancements
+- **SMS / WhatsApp Integration**: Allow farmers to query the system via WhatsApp or SMS without needing a smartphone app.
+- **Market Price Integration**: Real-time integration with agricultural mandis to provide crop price forecasts.
+- **IoT Sensor Sync**: Direct integration with soil moisture and temperature sensors to provide proactive alerts.
 
 ---
 
 ## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
----
+Contributions are highly encouraged! 
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## 📄 License
+This project is open-source and available under the **MIT License**.
 
-This project is open-source and available under the MIT License.
-
----
-
-## 🙏 Acknowledgments
-
-- **HuggingFace** for providing free inference API
-- **Qwen Team** for the excellent Qwen 2.5 models
-- **Meta** for Llama 3.1 models
-- **LibreTranslate** for open-source translation
+## 🙏 Acknowledgements
+- [HuggingFace](https://huggingface.co/) for making top-tier open models accessible via Inference API.
+- [Qwen Team (Alibaba Cloud)](https://qwenlm.github.io/) for their state-of-the-art language and vision-language models.
+- [Meta](https://ai.meta.com/llama/) for the robust Llama 3.1 models.
+- [LibreTranslate](https://libretranslate.com/) for a reliable, open-source translation engine.
+- [LangChain](https://www.langchain.com/) for simplifying the orchestration of complex AI workflows.
